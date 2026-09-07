@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Convertidor de Subtítulos VTT a SRT</title>
+    <style>
+        /* ===== CSS VARIABLES - Theme ===== */
+        :root {
+            --bg-primary: #1e222a;
+            --bg-secondary: #2e3440;
+            --bg-tertiary: #3b4252;
+            --bg-hover: #434c5e;
+            --bg-input: #4c566a;
+            
+            --text-primary: #e5e9f0;
+            --text-secondary: #d8dee9;
+            --text-muted: #81a1c1;
+            
+            --accent: #88c0d0;
+            --accent-hover: #81a1c1;
+            --accent-dark: #5e81ac;
+            
+            --success: #a3be8c;
+            --warning: #ebcb8b;
+            --error: #bf616a;
+            
+            --border: #4c566a;
+            --border-hover: #81a1c1;
+            
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            --radius: 12px;
+            --transition: 0.25s ease;
+        }
+
+        /* ===== RESET & BASE ===== */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        /* ===== CONTAINER ===== */
+        .container {
+            background: var(--bg-secondary);
+            border-radius: var(--radius);
+            padding: 35px 40px 30px;
+            max-width: 720px;
+            width: 100%;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+
+        /* ===== HEADER ===== */
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 28px;
+            padding-bottom: 18px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .header-icon {
+            font-size: 2.2rem;
+            line-height: 1;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+            color: var(--text-primary);
+        }
+
+        .header h1 small {
+            font-size: 0.85rem;
+            font-weight: 400;
+            color: var(--text-muted);
+            margin-left: 10px;
+        }
+
+        .badge {
+            background: var(--accent-dark);
+            color: var(--text-primary);
+            font-size: 0.5rem;
+            font-weight: 600;
+            padding: 2px 12px;
+            border-radius: 30px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-left: auto;
+        }
+
+        /* ===== DROP ZONE ===== */
+        .drop-zone {
+            border: 2px dashed var(--border);
+            border-radius: var(--radius);
+            padding: 45px 20px;
+            text-align: center;
+            background: var(--bg-tertiary);
+            transition: var(--transition);
+            cursor: pointer;
+            position: relative;
+        }
+
+        .drop-zone:hover {
+            border-color: var(--border-hover);
+            background: var(--bg-hover);
+        }
+
+        .drop-zone.dragover {
+            border-color: var(--accent);
+            background: var(--bg-hover);
+            transform: scale(1.01);
+        }
+
+        .drop-zone input[type="file"] {
+            display: none;
+        }
+
+        .drop-zone .icon {
+            font-size: 3rem;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .drop-zone .title {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .drop-zone .subtitle {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .drop-zone .file-info {
+            margin-top: 16px;
+            padding: 10px 18px;
+            background: var(--bg-input);
+            border-radius: 40px;
+            display: inline-block;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+        }
+
+        /* ===== BOTONES ===== */
+        .btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin: 24px 0 16px;
+        }
+
+        .btn {
+            padding: 12px 28px;
+            border: none;
+            border-radius: 40px;
+            font-weight: 500;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1 1 auto;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: var(--bg-primary);
+            font-weight: 600;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: var(--accent-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(136, 192, 208, 0.25);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-hover);
+            border-color: var(--border-hover);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: var(--bg-primary);
+            font-weight: 600;
+        }
+
+        .btn-success:hover {
+            filter: brightness(1.1);
+            transform: translateY(-2px);
+        }
+
+        /* ===== LOG / CONSOLE ===== */
+        .log {
+            background: var(--bg-tertiary);
+            border-radius: var(--radius);
+            padding: 16px 20px;
+            margin-top: 22px;
+            font-size: 0.9rem;
+            max-height: 220px;
+            overflow-y: auto;
+            border-left: 4px solid var(--text-muted);
+            color: var(--text-secondary);
+            font-family: 'Consolas', 'Monaco', monospace;
+            line-height: 1.7;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .log::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .log::-webkit-scrollbar-track {
+            background: var(--bg-tertiary);
+        }
+
+        .log::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 10px;
+        }
+
+        .log::-webkit-scrollbar-thumb:hover {
+            background: var(--border-hover);
+        }
+
+        .log .timestamp {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            opacity: 0.7;
+        }
+
+        .log.success {
+            border-left-color: var(--success);
+        }
+
+        .log.error {
+            border-left-color: var(--error);
+        }
+
+        .log.warning {
+            border-left-color: var(--warning);
+        }
+
+        /* ===== FOOTER ===== */
+        .footer {
+            margin-top: 28px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-align: center;
+            opacity: 0.6;
+            letter-spacing: 0.3px;
+            border-top: 1px solid var(--border);
+            padding-top: 18px;
+        }
+
+        .footer span {
+            display: inline-block;
+            margin: 0 8px;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 1.3rem;
+            }
+
+            .header h1 small {
+                font-size: 0.7rem;
+                margin-left: 6px;
+                display: block;
+            }
+
+            .badge {
+                font-size: 0.55rem;
+                padding: 1px 10px;
+            }
+
+            .drop-zone {
+                padding: 30px 15px;
+            }
+
+            .drop-zone .icon {
+                font-size: 2.2rem;
+            }
+
+            .btn {
+                padding: 10px 18px;
+                font-size: 0.85rem;
+                flex: 1 1 100%;
+            }
+
+            .btn-group {
+                flex-direction: column;
+            }
+
+            .log {
+                font-size: 0.8rem;
+                padding: 12px 14px;
+                max-height: 160px;
+            }
+        }
+
+        /* ===== ANIMACIONES ===== */
+        @keyframes fadeSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .log .entry {
+            animation: fadeSlideIn 0.2s ease;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- HEADER -->
+    <div class="header">
+        <span class="header-icon">🎯</span>
+        <h1>
+            Convertidor de Subtítulos VTT → SRT
+        </h1>
+        <span class="badge">By SrSancen</span>
+    </div>
+
+    <!-- DROP ZONE -->
+    <div class="drop-zone" id="dropZone">
+        <input type="file" id="fileInput" accept=".vtt,.VTT" />
+        <span class="icon">📂</span>
+        <div class="title">Selecciona tu archivo <strong>.vtt</strong></div>
+        <div class="subtitle">Arrastra y suelta o haz clic para explorar</div>
+        <div id="fileInfo" class="file-info" style="display:none;"></div>
+    </div>
+
+    <!-- BOTONES -->
+    <div class="btn-group">
+        <button class="btn btn-primary" id="convertBtn" disabled>
+            ⚡ Convertir
+        </button>
+        <button class="btn btn-secondary" id="clearBtn">
+            🗑️ Limpiar
+        </button>
+    </div>
+
+    <!-- LOG -->
+    <div id="log" class="log">
+        <span class="timestamp">📌</span> Esperando archivo...
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+        <span>🔒 100% local</span>
+        <span>·</span>
+        <span>Sin servidores externos</span>
+        <span>·</span>
+        <span><a href="https://github.com/SrSancen/ConvertidorVTTaSRT" target="_blank" rel="noopener noreferrer">Código Fuente</a></span>
+    </div>
+</div>
+
+<script>
+    (function() {
+        'use strict';
+
+        // ===== ELEMENTOS =====
+        const fileInput = document.getElementById('fileInput');
+        const dropZone = document.getElementById('dropZone');
+        const fileInfo = document.getElementById('fileInfo');
+        const convertBtn = document.getElementById('convertBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const log = document.getElementById('log');
+
+        // ===== ESTADO =====
+        let selectedFile = null;
+        let fileContent = null;
+        let originalFileName = '';
+
+        // ===== FUNCIONES DE LOG =====
+        function setLog(msg, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString('es-ES', { hour12: false });
+            const icons = {
+                info: '📌',
+                success: '✅',
+                error: '❌',
+                warning: '⚠️'
+            };
+            const icon = icons[type] || '📌';
+            log.innerHTML = `<span class="timestamp">${icon} ${timestamp}</span> ${msg}`;
+            log.className = 'log';
+            if (type !== 'info') log.classList.add(type);
+        }
+
+        function appendLog(msg, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString('es-ES', { hour12: false });
+            const icons = {
+                info: '📌',
+                success: '✅',
+                error: '❌',
+                warning: '⚠️'
+            };
+            const icon = icons[type] || '📌';
+            const old = log.innerHTML;
+            const newLine = `<span class="timestamp">${icon} ${timestamp}</span> ${msg}`;
+            log.innerHTML = old + '\n' + newLine;
+            log.className = 'log';
+            if (type !== 'info') log.classList.add(type);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        // ===== LECTURA DE ARCHIVO =====
+        function readFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = (e) => reject(e.target.error);
+                reader.readAsText(file, 'UTF-8');
+            });
+        }
+
+        // ===== CONVERSIÓN VTT → SRT =====
+        function convertVttToSrt(vttText) {
+            let lines = vttText.split(/\r?\n/);
+            
+            // Eliminar BOM si existe
+            if (lines.length > 0 && lines[0].charCodeAt(0) === 0xFEFF) {
+                lines[0] = lines[0].substring(1);
+            }
+
+            // Eliminar cabecera WEBVTT y líneas vacías iniciales
+            while (lines.length > 0 && (lines[0].trim() === '' || lines[0].trim().toUpperCase() === 'WEBVTT')) {
+                lines.shift();
+            }
+            while (lines.length > 0 && lines[0].trim() === '') {
+                lines.shift();
+            }
+
+            let srtLines = [];
+            let index = 1;
+            let i = 0;
+
+            while (i < lines.length) {
+                // Saltar líneas vacías
+                if (lines[i].trim() === '') {
+                    i++;
+                    continue;
+                }
+
+                // Buscar línea de tiempo con " --> "
+                if (lines[i].includes(' --> ')) {
+                    // Convertir tiempos: '.' → ',' para milisegundos en SRT
+                    let times = lines[i].trim().replace(/\./g, ',');
+
+                    let textLines = [];
+                    i++;
+                    while (i < lines.length && lines[i].trim() !== '' && !lines[i].includes(' --> ')) {
+                        let line = lines[i];
+                        // Eliminar etiquetas HTML (u, c, style, color, etc.)
+                        line = line.replace(/<[^>]+>/g, '').trim();
+                        if (line !== '') {
+                            textLines.push(line);
+                        }
+                        i++;
+                    }
+
+                    if (textLines.length > 0) {
+                        srtLines.push(index.toString());
+                        srtLines.push(times);
+                        srtLines.push(textLines.join(' '));
+                        srtLines.push('');
+                        index++;
+                    }
+                } else {
+                    i++;
+                }
+            }
+
+            let result = srtLines.join('\n');
+            result = result.replace(/\n+$/, '');
+            return result;
+        }
+
+        // ===== GUARDAR ARCHIVO (SIEMPRE PREGUNTA CARPETA) =====
+        async function saveFile(content, suggestedName) {
+            try {
+                // Usamos File System Access API para elegir carpeta
+                const handle = await window.showSaveFilePicker({
+                    suggestedName: suggestedName + '.srt',
+                    types: [{
+                        description: 'Subtítulos SRT',
+                        accept: { 'text/plain': ['.srt'] }
+                    }]
+                });
+
+                const writable = await handle.createWritable();
+                await writable.write(content);
+                await writable.close();
+
+                appendLog(`Archivo guardado en: "${handle.name}"`, 'success');
+                return true;
+            } catch (err) {
+                if (err.name === 'AbortError' || err.message?.includes('abort')) {
+                    appendLog('Guardado cancelado por el usuario.', 'warning');
+                } else {
+                    appendLog(`Error al guardar: ${err.message}`, 'error');
+                    console.error(err);
+                }
+                return false;
+            }
+        }
+
+        // ===== MANEJO DE ARCHIVO =====
+        async function handleFile(file) {
+            if (!file) return;
+
+            const ext = file.name.split('.').pop().toLowerCase();
+            if (ext !== 'vtt') {
+                setLog('El archivo debe tener extensión .vtt', 'error');
+                return;
+            }
+
+            try {
+                const content = await readFile(file);
+                
+                // Validación básica: debe contener "WEBVTT" o al menos " --> "
+                const hasWebvtt = content.trim().toUpperCase().startsWith('WEBVTT');
+                const hasTimeline = content.includes(' --> ');
+                
+                if (!hasWebvtt && !hasTimeline) {
+                    setLog('El archivo no parece un .vtt válido (sin WEBVTT ni marcas de tiempo)', 'warning');
+                }
+
+                selectedFile = file;
+                fileContent = content;
+                originalFileName = file.name.replace(/\.[^.]+$/, '');
+
+                fileInfo.style.display = 'inline-block';
+                fileInfo.textContent = `📁 ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+                convertBtn.disabled = false;
+                setLog(`Archivo "${file.name}" cargado correctamente.`, 'success');
+            } catch (err) {
+                setLog(`Error al leer el archivo: ${err.message}`, 'error');
+                resetFileState();
+            }
+        }
+
+        function resetFileState() {
+            selectedFile = null;
+            fileContent = null;
+            originalFileName = '';
+            fileInfo.style.display = 'none';
+            fileInfo.textContent = '';
+            convertBtn.disabled = true;
+        }
+
+        // ===== ACCIÓN CONVERTIR Y GUARDAR =====
+        async function convertAndSave() {
+            if (!fileContent) {
+                setLog('Primero selecciona un archivo .vtt válido.', 'error');
+                return;
+            }
+
+            try {
+                setLog('Convirtiendo...', 'info');
+                const srtContent = convertVttToSrt(fileContent);
+
+                if (srtContent.trim() === '') {
+                    setLog('La conversión generó un archivo vacío. Verifica que el .vtt tenga bloques válidos.', 'error');
+                    return;
+                }
+
+                // Determinar nombre base
+                let baseName = originalFileName || 'subtitulo';
+                // Si termina en .vtt, lo quitamos (por si acaso)
+                baseName = baseName.replace(/\.vtt$/i, '');
+
+                // Guardar (siempre pregunta carpeta)
+                const saved = await saveFile(srtContent, baseName);
+
+                if (saved) {
+                    // Mostrar vista previa
+                    const preview = srtContent.split('\n').slice(0, 10).join('\n');
+                    if (preview.length > 300) {
+                        appendLog(`Vista previa (primeros 300 caracteres):\n${preview.substring(0, 300)}...`, 'info');
+                    } else {
+                        appendLog(`Vista previa:\n${preview}`, 'info');
+                    }
+                }
+            } catch (err) {
+                setLog(`Error durante la conversión: ${err.message}`, 'error');
+                console.error(err);
+            }
+        }
+
+        // ===== EVENTOS =====
+
+        // Click en drop zone
+        dropZone.addEventListener('click', (e) => {
+            if (e.target.tagName !== 'INPUT') {
+                fileInput.click();
+            }
+        });
+
+        // Drag & Drop
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                const file = files[0];
+                if (file.name.toLowerCase().endsWith('.vtt')) {
+                    handleFile(file);
+                } else {
+                    setLog('Solo se aceptan archivos .vtt', 'error');
+                }
+            }
+        });
+
+        // Input file
+        fileInput.addEventListener('change', (e) => {
+            if (fileInput.files.length > 0) {
+                handleFile(fileInput.files[0]);
+            }
+            fileInput.value = '';
+        });
+
+        // Botón convertir
+        convertBtn.addEventListener('click', convertAndSave);
+
+        // Botón limpiar
+        clearBtn.addEventListener('click', () => {
+            resetFileState();
+            setLog('Limpieza correcta. Selecciona otro archivo .vtt. 👆', 'info');
+            fileInput.value = '';
+        });
+
+        // ===== INICIALIZAR =====
+        setLog('Selecciona un archivo .vtt para comenzar.', 'info');
+
+        // ===== DETECCIÓN DE SOPORTE API =====
+        if (!('showSaveFilePicker' in window)) {
+            appendLog('Tu navegador no soporta la API de selección de carpeta. Usa Chrome/Edge/Opera.', 'warning');
+        }
+
+    })();
+</script>
+
+</body>
+</html>
